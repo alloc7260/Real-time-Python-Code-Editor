@@ -16,9 +16,12 @@
     <div class="container">
         <header>
             <div class="header">
-                <label for="file" class="button-67" role="button"><input type="file" id="file" class="file-input" accept=".py" onchange="loadFile(event)">Upload Python File</label>
+                <div>
+                    <button id="upload-file" class="button-67" title="Upload Python File"><input type="file" id="file" class="file-input" accept=".py" onchange="loadFile(event)">🔺</button>
+                    <button id="download-file" class="button-67" title="Download Python Code">🔻</button>
+                </div>
                 <h1>Real-time Python Code Editor</h1>
-                <button id="dark-mode-toggle" class="dark-mode-btn">Toggle Dark Mode</button>
+                <button id="dark-mode-toggle" class="dark-mode-btn"></button>
             </div>
         </header>
         <div class="editor-body">

@@ -5,39 +5,58 @@ const socket = io.connect('http://' + document.domain + ':' + location.port);
 const editor = CodeMirror.fromTextArea(document.getElementById('code-editor'), {
     mode: 'python',
     lineNumbers: true,
-    theme: 'default',
     matchBrackets: true
 });
 
-// Event listener to detect changes in the code editor
-editor.on('keyup', function (cm, event) {
+// Function to handle code changes and emit them to the server
+function handleCodeChange(cm) {
     const code = cm.getValue(); // Get current code from editor
     socket.emit('code_change', code); // Send code to server via WebSocket
-});
+}
 
-editor.on('change', function (cm, change) {
-    const code = cm.getValue(); // Get current code from editor
-    socket.emit('code_change', code); // Send code to server via WebSocket
-});
+// Attach code change event listeners to the editor
+editor.on('keyup', handleCodeChange);
+editor.on('change', handleCodeChange);
 
 // Handle the output from the server
 socket.on('output', function (data) {
     document.getElementById('output').textContent = data.output;
 });
 
-// Handle Dark Mode toggle
-document.getElementById('dark-mode-toggle').addEventListener('click', function () {
-    document.body.classList.toggle('dark-mode');
-    const darkMode = document.body.classList.contains('dark-mode');
+// Function to toggle dark mode
+function toggleDarkMode() {
+    const darkModeEnabled = document.body.classList.toggle('dark-mode');
+    localStorage.setItem('darkMode', darkModeEnabled);
 
-    // Store dark mode preference in localStorage
-    localStorage.setItem('darkMode', darkMode);
+    // Update toggle button icon
+    document.getElementById('dark-mode-toggle').textContent = darkModeEnabled ? '🌞' : '🌜';
+}
+
+// Initialize dark mode based on saved preference
+function initializeDarkMode() {
+    const darkModeEnabled = localStorage.getItem('darkMode') === 'true';
+    document.body.classList.toggle('dark-mode', darkModeEnabled);
+    document.getElementById('dark-mode-toggle').textContent = darkModeEnabled ? '🌞' : '🌜';
+}
+
+// Handle Dark Mode toggle
+document.getElementById('dark-mode-toggle').addEventListener('click', toggleDarkMode);
+initializeDarkMode();
+
+// Handle file download
+document.getElementById('download-file').addEventListener('click', function () {
+    const code = editor.getValue(); // Get the current code from the editor
+    const blob = new Blob([code], { type: 'text/plain' }); // Create a Blob with the code content
+    const a = document.createElement('a'); // Create an anchor element
+    a.href = URL.createObjectURL(blob); // Create a downloadable object URL
+    a.download = 'code.py'; // Set the default file name
+    a.click(); // Trigger the download
 });
 
-// Check for dark mode preference on page load
-if (localStorage.getItem('darkMode') === 'true') {
-    document.body.classList.add('dark-mode');
-}
+// Handle file upload
+document.getElementById('upload-file').addEventListener('click', function () {
+    document.getElementById('file').click(); // Programmatically trigger the file input click
+});
 
 // Handle file input (importing a Python file)
 function loadFile(event) {
@@ -45,8 +64,7 @@ function loadFile(event) {
     if (file && file.name.endsWith('.py')) {
         const reader = new FileReader();
         reader.onload = function (e) {
-            const fileContent = e.target.result; // Get the content of the file
-            editor.setValue(fileContent); // Load the content into the editor
+            editor.setValue(e.target.result); // Load the content into the editor
         };
         reader.readAsText(file); // Read the file as text
     } else {
@@ -55,4 +73,7 @@ function loadFile(event) {
 
     // Clear the file input
     event.target.value = '';
-};
+}
+
+// Attach the file input change event listener
+document.getElementById('file').addEventListener('change', loadFile);
